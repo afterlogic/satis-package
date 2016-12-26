@@ -57,6 +57,7 @@ class PackagesBuilder extends Builder
         $packagesByName = [];
         $dumper = new ArrayDumper();
         foreach ($packages as $package) {
+			$this->customProcess($package);
             $packagesByName[$package->getName()][$package->getPrettyVersion()] = $dumper->dump($package);
         }
 
@@ -76,6 +77,7 @@ class PackagesBuilder extends Builder
                     $packagesByName[$packageName][$version]['uid'] = $i++;
                 }
             }
+			
             // Dump the packages along with packages they're replaced by
             foreach ($packagesByName as $packageName => $versionPackages) {
                 $dumpPackages = $this->findReplacements($packagesByName, $packageName);
@@ -244,4 +246,22 @@ class PackagesBuilder extends Builder
         $repoJson = new JsonFile($this->filename);
         $repoJson->write($repo);
     }
+	
+    private function customProcess($package)
+	{
+		$sVersion = $package->getPrettyVersion();
+		
+		if ($package->isDev())
+		{
+			$sVersion = preg_replace('/'.$package->getStability().'-/i', "", $sVersion);
+			$package->setSourceReference($sVersion);
+		}
+		else
+		{
+			$package->setSourceReference('tags/'.$sVersion);
+		}
+
+		$package->setDistUrl($package->getSourceUrl().'/archive/'.$sVersion.'.zip');
+		$package->setDistType("zip");
+	}
 }
