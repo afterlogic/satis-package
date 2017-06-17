@@ -264,47 +264,50 @@ class PackagesBuilder extends Builder
 			$package->setSourceReference('tags/'.$sVersion);
 		}
 		
-		//will add dev-master version as alternative requirements to all Afterlogic modules
-		$aLinks = $package->getRequires();
-		$bNeedToUpdateRequires = false;
-		
-		foreach ($aLinks as &$link)
+		if ($package->isDev())
 		{
-			if (substr($link->getTarget(), 0, 11) === 'afterlogic/')
+			//will add dev-master version as alternative requirements to all Afterlogic modules
+			$aLinks = $package->getRequires();
+			$bNeedToUpdateRequires = false;
+
+			foreach ($aLinks as &$link)
 			{
-//				var_dump("=====================");
-//				var_dump($link->getTarget());
-//				var_dump($link->getPrettyConstraint());
-	//			var_dump($link->getPrettyString());
-				
-				$oLinkConstraint = $link->getConstraint();
-				$prettyConstraint = $oLinkConstraint->getPrettyString();
-//				
-				if (strpos($prettyConstraint, 'dev-master') === false)
+				if (substr($link->getTarget(), 0, 11) === 'afterlogic/')
 				{
-//					$aConstraints = $oLinkConstraint->getConstraints();
-//					$aConstraints[] = new Constraint('=', 'dev-master');
-							
-//					$oConstraint->setPrettyString($prettyConstraint . ' || dev-master');
-					
-					$bNeedToUpdateRequires = true;
-					
-					$versionParser = new VersionParser();
-					$oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master');
-					$link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
+	//				var_dump("=====================");
+	//				var_dump($link->getTarget());
+	//				var_dump($link->getPrettyConstraint());
+		//			var_dump($link->getPrettyString());
+
+					$oLinkConstraint = $link->getConstraint();
+					$prettyConstraint = $oLinkConstraint->getPrettyString();
+	//				
+					if (strpos($prettyConstraint, 'dev-master') === false)
+					{
+	//					$aConstraints = $oLinkConstraint->getConstraints();
+	//					$aConstraints[] = new Constraint('=', 'dev-master');
+
+	//					$oConstraint->setPrettyString($prettyConstraint . ' || dev-master');
+
+						$bNeedToUpdateRequires = true;
+
+						$versionParser = new VersionParser();
+						$oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master');
+						$link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
+					}
+
+	//				var_dump($oLinkConstraint);
+	//				var_dump($oLinkConstraint->getConstraints());
+	//				var_dump($aConstraints);
 				}
-				
-//				var_dump($oLinkConstraint);
-//				var_dump($oLinkConstraint->getConstraints());
-//				var_dump($aConstraints);
+			}
+
+			if ($bNeedToUpdateRequires) 
+			{
+				$package->setRequires($aLinks);
 			}
 		}
-			
-		if ($bNeedToUpdateRequires) 
-		{
-			$package->setRequires($aLinks);
-		}
-		//
+			//
 
 		$package->setDistUrl($package->getSourceUrl().'/archive/'.$sVersion.'.zip');
 		$package->setDistType("zip");
