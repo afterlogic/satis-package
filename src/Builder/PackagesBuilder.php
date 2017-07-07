@@ -274,11 +274,6 @@ class PackagesBuilder extends Builder
 			{
 				if (substr($link->getTarget(), 0, 11) === 'afterlogic/')
 				{
-	//				var_dump("=====================");
-	//				var_dump($link->getTarget());
-	//				var_dump($link->getPrettyConstraint());
-		//			var_dump($link->getPrettyString());
-
 					$oLinkConstraint = $link->getConstraint();
 					$prettyConstraint = $oLinkConstraint->getPrettyString();
 	//				
@@ -295,10 +290,6 @@ class PackagesBuilder extends Builder
 						$oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master');
 						$link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
 					}
-
-	//				var_dump($oLinkConstraint);
-	//				var_dump($oLinkConstraint->getConstraints());
-	//				var_dump($aConstraints);
 				}
 			}
 
