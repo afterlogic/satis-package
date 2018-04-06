@@ -13,7 +13,6 @@ namespace Composer\Satis\Builder;
 
 use Composer\Json\JsonFile;
 use Composer\Package\Dumper\ArrayDumper;
-use Composer\Util\Filesystem;
 use Symfony\Component\Console\Output\OutputInterface;
 use Composer\Semver\Constraint\Constraint;
 use Composer\Semver\VersionParser;
@@ -46,7 +45,7 @@ class PackagesBuilder extends Builder
         parent::__construct($output, $outputDir, $config, $skipErrors);
 
         $this->filename = $this->outputDir . '/packages.json';
-        $this->includeFileName = isset($config['include-filename']) ? $config['include-filename'] : 'include/all$%hash%.json';
+        $this->includeFileName = $config['include-filename'] ?? 'include/all$%hash%.json';
     }
 
     /**
@@ -135,7 +134,7 @@ class PackagesBuilder extends Builder
             $path = $this->outputDir . '/' . ltrim($includesUrl, '/');
             $dirname = dirname($path);
             $basename = basename($path);
-            if (strpos($dirname, '%hash%') !== false) {
+            if (false !== strpos($dirname, '%hash%')) {
                 throw new \RuntimeException('Refusing to prune when %hash% is in dirname');
             }
             $pattern = '#^' . str_replace('%hash%', '([0-9a-zA-Z]{' . strlen($hash) . '})', preg_quote($basename, '#')) . '$#';
@@ -173,7 +172,7 @@ class PackagesBuilder extends Builder
 
         $hash = hash($hashAlgorithm, $contents);
 
-        if (strpos($includesUrl, '%hash%') !== false) {
+        if (false !== strpos($includesUrl, '%hash%')) {
             $this->writtenIncludeJsons[] = [$hash, $includesUrl];
             $filename = str_replace('%hash%', $hash, $includesUrl);
             if (file_exists($path = $this->outputDir . '/' . ltrim($filename, '/'))) {

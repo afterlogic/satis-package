@@ -13,11 +13,9 @@ namespace Composer\Satis\Console\Command;
 
 use Composer\Command\BaseCommand;
 use Composer\Json\JsonFile;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\{InputArgument, InputInterface};
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Finder\{Finder, SplFileInfo};
 
 class PurgeCommand extends BaseCommand
 {
@@ -33,7 +31,7 @@ class PurgeCommand extends BaseCommand
 <<<'EOT'
 The <info>purge</info> command deletes useless archive files, depending
 on given json file (satis.json is used by default) and the
-lastest json file in the include directory of the given output-dir.
+newest json file in the include directory of the given output-dir.
 
 In your satis.json (or other name you give), you must define
 "archive" argument.

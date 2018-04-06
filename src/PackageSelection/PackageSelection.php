@@ -14,15 +14,10 @@ namespace Composer\Satis\PackageSelection;
 use Composer\Composer;
 use Composer\DependencyResolver\Pool;
 use Composer\Json\JsonFile;
-use Composer\Package\AliasPackage;
-use Composer\Package\BasePackage;
-use Composer\Package\Link;
+use Composer\Package\{AliasPackage, BasePackage, Link};
 use Composer\Package\Loader\ArrayLoader;
 use Composer\Package\PackageInterface;
-use Composer\Repository\ComposerRepository;
-use Composer\Repository\ConfigurableRepositoryInterface;
-use Composer\Repository\PlatformRepository;
-use Composer\Repository\RepositoryInterface;
+use Composer\Repository\{ComposerRepository, ConfigurableRepositoryInterface, PlatformRepository, RepositoryInterface};
 use Composer\Semver\Constraint\MultiConstraint;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -96,9 +91,9 @@ class PackageSelection
             $this->requireAll = true;
         }
 
-        $this->minimumStability = isset($config['minimum-stability']) ? $config['minimum-stability'] : 'dev';
-        $this->abandoned = isset($config['abandoned']) ? $config['abandoned'] : [];
-        $this->homepage = isset($config['homepage']) ? $config['homepage'] : null;
+        $this->minimumStability = $config['minimum-stability'] ?? 'dev';
+        $this->abandoned = $config['abandoned'] ?? [];
+        $this->homepage = $config['homepage'] ?? null;
     }
 
     /**
@@ -118,7 +113,7 @@ class PackageSelection
      */
     public function hasRepositoryFilter()
     {
-        return $this->repositoryFilter !== null;
+        return null !== $this->repositoryFilter;
     }
 
     /**
@@ -177,7 +172,7 @@ class PackageSelection
         }
 
         if ($this->hasRepositoryFilter()) {
-            if (count($repos) === 0) {
+            if (0 === count($repos)) {
                 throw new \InvalidArgumentException(sprintf('Specified repository url "%s" does not exist.', $this->repositoryFilter));
             } elseif (count($repos) > 1) {
                 throw new \InvalidArgumentException(sprintf('Found more than one repository for url "%s".', $this->repositoryFilter));
@@ -295,6 +290,12 @@ class PackageSelection
                                     continue;
                                 }
                                 $package = $loader->load($jsonVersion);
+
+                                // skip aliases
+                                if ($package instanceof AliasPackage) {
+                                    $package = $package->getAliasOf();
+                                }
+
                                 $packages[$package->getUniqueName()] = $package;
                             }
                         }

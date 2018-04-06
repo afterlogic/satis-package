@@ -11,14 +11,14 @@
 
 namespace Composer\Satis\Builder;
 
-use Composer\Package\Link;
-use Composer\Package\Package;
+use Composer\Package\{Link, Package};
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\NullOutput;
 
 /**
  * @author James Hautot <james@rezo.net>
  */
-class ArchiveBuilderHelperTest extends \PHPUnit_Framework_TestCase
+class ArchiveBuilderHelperTest extends TestCase
 {
     /** @var NullOutput */
     protected $output;
