@@ -59,6 +59,8 @@ EOT
         $configFile = $input->getArgument('file');
         $repositoryUrl = $input->getArgument('url');
 
+        $sRepositoryType = preg_match('{\/\/github.com/}i', $repositoryUrl) ? 'git' : 'vcs';
+
         if (preg_match('{^https?://}i', $configFile)) {
             $output->writeln('<error>Unable to write to remote file ' . $configFile . '</error>');
 
@@ -91,7 +93,7 @@ EOT
             }
         }
 
-        $config['repositories'][] = ['type' => 'vcs', 'url' => $repositoryUrl];
+        $config['repositories'][] = ['type' => $sRepositoryType, 'url' => $repositoryUrl];
 
         $file->write($config);
 
