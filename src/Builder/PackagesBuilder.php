@@ -275,18 +275,16 @@ class PackagesBuilder extends Builder
 				{
 					$oLinkConstraint = $link->getConstraint();
 					$prettyConstraint = $oLinkConstraint->getPrettyString();
-	//				
+
 					if (strpos($prettyConstraint, 'dev-master') === false)
 					{
 	//					$aConstraints = $oLinkConstraint->getConstraints();
 	//					$aConstraints[] = new Constraint('=', 'dev-master');
-
 	//					$oConstraint->setPrettyString($prettyConstraint . ' || dev-master');
-
 						$bNeedToUpdateRequires = true;
 
 						$versionParser = new VersionParser();
-						$oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master');
+                        $oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master || dev-laravel || dev-8.x.x-version');
 						$link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
 					}
 				}
