@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of composer/satis.
  *
@@ -14,25 +16,13 @@ namespace Composer\Satis\Builder;
 use Composer\Package\PackageInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * Builds the archives of the repository.
- *
- * @author James Hautot <james@rezo.net>
- */
 class ArchiveBuilderHelper
 {
     /** @var OutputInterface The output Interface. */
     private $output;
-
     /** @var array The 'archive' part of a configuration file. */
     private $archiveConfig;
 
-    /**
-     * Helper Constructor.
-     *
-     * @param OutputInterface $output        The output Interface
-     * @param array           $archiveConfig The 'archive' part of a configuration file
-     */
     public function __construct(OutputInterface $output, array $archiveConfig)
     {
         $this->output = $output;
@@ -42,14 +32,7 @@ class ArchiveBuilderHelper
         $this->archiveConfig['blacklist'] = (array) ($archiveConfig['blacklist'] ?? []);
     }
 
-    /**
-     * Gets the directory where to dump archives.
-     *
-     * @param string $outputDir The directory where to build
-     *
-     * @return string $directory The directory where to dump archives
-     */
-    public function getDirectory($outputDir)
+    public function getDirectory(string $outputDir): string
     {
         if (isset($this->archiveConfig['absolute-directory'])) {
             $directory = $this->archiveConfig['absolute-directory'];
@@ -60,14 +43,7 @@ class ArchiveBuilderHelper
         return $directory;
     }
 
-    /**
-     * Tells if a package has to be dumped or not.
-     *
-     * @param PackageInterface $package The package to be dumped
-     *
-     * @return bool false if the package has to be dumped
-     */
-    public function isSkippable(PackageInterface $package)
+    public function isSkippable(PackageInterface $package): bool
     {
         if ('metapackage' === $package->getType()) {
             return true;
@@ -82,18 +58,60 @@ class ArchiveBuilderHelper
         }
 
         $names = $package->getNames();
-        if ($this->archiveConfig['whitelist'] && !array_intersect($this->archiveConfig['whitelist'], $names)) {
+
+        if ($this->archiveConfig['whitelist'] && !$this->isOneOfNamesInList($names, $this->archiveConfig['whitelist'])) {
             $this->output->writeln(sprintf("<info>Skipping '%s' (is not in whitelist)</info>", $name));
 
             return true;
         }
 
-        if ($this->archiveConfig['blacklist'] && array_intersect($this->archiveConfig['blacklist'], $names)) {
+        if ($this->archiveConfig['blacklist'] && $this->isOneOfNamesInList($names, $this->archiveConfig['blacklist'])) {
             $this->output->writeln(sprintf("<info>Skipping '%s' (is in blacklist)</info>", $name));
 
             return true;
         }
 
         return false;
+    }
+
+    protected function isOneOfNamesInList(array $names, array $list): bool
+    {
+        $patterns = $this->convertListToRegexPatterns($list);
+
+        foreach ($names as $name) {
+            if ($this->doesNameMatchOneOfPatterns($name, $patterns)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function doesNameMatchOneOfPatterns(string $name, array $patterns): bool
+    {
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function convertListToRegexPatterns(array $list): array
+    {
+        $patterns = [];
+
+        foreach ($list as $entry) {
+            $pattern = explode('*', $entry);
+            $pattern = array_map(static function ($value): string {
+                return preg_quote($value, '/');
+            }, $pattern);
+            $pattern = '/^' . implode('.*', $pattern) . '$/';
+
+            $patterns[] = $pattern;
+        }
+
+        return $patterns;
     }
 }

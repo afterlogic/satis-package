@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of composer/satis.
  *
@@ -11,35 +13,43 @@
 
 namespace Composer\Satis\Console;
 
-use Composer\{Composer, Factory};
-use Composer\IO\{ConsoleIO, IOInterface};
+use Composer\Composer;
+use Composer\Console\Application as ComposerApplication;
+use Composer\Factory;
+use Composer\IO\ConsoleIO;
+use Composer\IO\IOInterface;
+use Composer\IO\NullIO;
 use Composer\Satis\Console\Command;
 use Composer\Satis\Satis;
 use Composer\Util\ErrorHandler;
+use Composer\Util\Platform;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @author Jordi Boggiano <j.boggiano@seld.be>
- */
-class Application extends BaseApplication
+class Application extends ComposerApplication
 {
     /** @var IOInterface */
     protected $io;
-
-    /** @var Composer */
+    /** @var Composer|null */
     protected $composer;
 
     public function __construct()
     {
-        parent::__construct('Satis', Satis::VERSION);
+        // Composer constuctor does not allow passing BaseApplication::__construct('Satis', Satis::VERSION);
+        parent::__construct();
+        $this->setName('Satis');
+        $this->setVersion(Satis::VERSION);
     }
 
     /**
-     * {@inheritdoc}
+     * Need to override composer's
      */
-    public function doRun(InputInterface $input, OutputInterface $output)
+    public function __destruct()
+    {
+    }
+
+    public function doRun(InputInterface $input, OutputInterface $output): int
     {
         $styles = Factory::createAdditionalStyles();
         foreach ($styles as $name => $style) {
@@ -52,33 +62,9 @@ class Application extends BaseApplication
         return parent::doRun($input, $output);
     }
 
-    /**
-     * @param bool              $required Not used
-     * @param array|string|null $config   either a configuration array or a filename to read from,
-     *                                    if null it will read from the default filename
-     *
-     * @return Composer
-     */
-    public function getComposer($required = true, $config = null)
+    protected function getDefaultCommands(): array
     {
-        if (null === $this->composer) {
-            try {
-                $this->composer = Factory::create($this->io, $config);
-            } catch (\InvalidArgumentException $e) {
-                $this->io->write($e->getMessage());
-                exit(1);
-            }
-        }
-
-        return $this->composer;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getDefaultCommands()
-    {
-        $commands = array_merge(parent::getDefaultCommands(), [
+        $commands = array_merge(BaseApplication::getDefaultCommands(), [
             new Command\InitCommand(),
             new Command\AddCommand(),
             new Command\BuildCommand(),
@@ -86,5 +72,22 @@ class Application extends BaseApplication
         ]);
 
         return $commands;
+    }
+
+    public function getComposerWithConfig($config): ?Composer
+    {
+        if (null === $this->composer) {
+            try {
+                $this->composer = Factory::create(Platform::isInputCompletionProcess() ? new NullIO() : $this->io, $config, false, false);
+            } catch (\InvalidArgumentException $e) {
+                $this->io->writeError($e->getMessage());
+                if ($this->areExceptionsCaught()) {
+                    exit(1);
+                }
+                throw $e;
+            }
+        }
+
+        return $this->composer;
     }
 }

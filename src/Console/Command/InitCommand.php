@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of composer/satis.
  *
@@ -13,41 +15,35 @@ namespace Composer\Satis\Console\Command;
 
 use Composer\Command\BaseCommand;
 use Composer\Json\JsonFile;
-use Symfony\Component\Console\Helper\{FormatterHelper, QuestionHelper};
-use Symfony\Component\Console\Input\{InputArgument, InputInterface, InputOption};
+use Symfony\Component\Console\Helper\FormatterHelper;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
-/**
- * @author Sergey Kolodyazhnyy <sergey.kolodyazhnyy@gmail.com>
- */
 class InitCommand extends BaseCommand
 {
-    protected function configure()
+    protected function configure(): void
     {
+        $this->getName() ?? $this->setName('init');
         $this
-            ->setName('init')
             ->setDescription('Initialize Satis configuration file')
             ->setDefinition([
                 new InputArgument('file', InputArgument::OPTIONAL, 'JSON file to use', './satis.json'),
                 new InputOption('name', null, InputOption::VALUE_REQUIRED, 'Repository name'),
                 new InputOption('homepage', null, InputOption::VALUE_REQUIRED, 'Home page'),
             ])
-            ->setHelp(<<<'EOT'
-The <info>init</info> generates configuration file (satis.json is used by default).
-You will need to run <comment>build</comment> command to build repository.
-EOT
-            )
-        ;
+            ->setHelp(
+                <<<'EOT'
+                The <info>init</info> generates configuration file (satis.json is used by default).
+                You will need to run <comment>build</comment> command to build repository.
+                EOT
+            );
     }
 
-    /**
-     * Print welcome message
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         /** @var FormatterHelper $formatter */
         $formatter = $this->getHelper('formatter');
@@ -65,15 +61,7 @@ EOT
         ]);
     }
 
-    /**
-     * Generate configuration file
-     *
-     * @param InputInterface  $input  The input instance
-     * @param OutputInterface $output The output instance
-     *
-     * @return int
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var FormatterHelper $formatter */
         $formatter = $this->getHelper('formatter');
@@ -118,13 +106,7 @@ EOT
         return 0;
     }
 
-    /**
-     * Interact with user
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         $this->prompt($input, $output, 'Repository name', 'name', function ($value) {
             if (!$value) {
@@ -136,25 +118,14 @@ EOT
 
         $this->prompt($input, $output, 'Home page', 'homepage', function ($value) {
             if (!preg_match('/https?:\/\/.+/', $value)) {
-                throw new \InvalidArgumentException(
-                    'Enter a valid URL it will be used for building your repository'
-                );
+                throw new \InvalidArgumentException('Enter a valid URL it will be used for building your repository');
             }
 
             return $value;
         });
     }
 
-    /**
-     * Prompt for an input option.
-     *
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     * @param string          $prompt
-     * @param string          $optionName For the default value and where the answer is set
-     * @param callable        $validator
-     */
-    protected function prompt(InputInterface $input, OutputInterface $output, $prompt, $optionName, $validator)
+    protected function prompt(InputInterface $input, OutputInterface $output, string $prompt, string $optionName, callable $validator): void
     {
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
@@ -165,17 +136,9 @@ EOT
         $input->setOption($optionName, $helper->ask($input, $output, $question));
     }
 
-    /**
-     * Build a question
-     *
-     * @param string $prompt
-     * @param string $default
-     *
-     * @return Question
-     */
-    protected function getQuestion($prompt, $default)
+    protected function getQuestion(string $prompt, ?string $default): Question
     {
-        $prompt = ($default ? sprintf('%s (%s)', $prompt, $default) : $prompt) . ': ';
+        $prompt = ($default && '' !== $default ? sprintf('%s (%s)', $prompt, $default) : $prompt) . ': ';
 
         return new Question($prompt, $default);
     }
