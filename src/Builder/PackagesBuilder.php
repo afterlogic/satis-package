@@ -287,55 +287,54 @@ class PackagesBuilder extends Builder
     }
 	
     private function customProcess($package)
-	{
-		$sVersion = $package->getPrettyVersion();
-		
-		//will change reference of dev-master package version
-		if ($package->isDev())
-		{
-			$sVersion = preg_replace('/'.$package->getStability().'-/i', "", $sVersion);
-			$package->setSourceReference($sVersion);
-		}
-		else
-		{
-			$package->setSourceReference('tags/'.$sVersion);
-		}
-		
-		if ($package->isDev())
-		{
-			//will add dev-master version as alternative requirements to all Afterlogic modules
-			$aLinks = $package->getRequires();
-			$bNeedToUpdateRequires = false;
+    {
+        $sVersion = $package->getPrettyVersion();
+        
+        //will change reference of dev-master package version
+        if ($package->isDev())
+        {
+            $sVersion = preg_replace('/'.$package->getStability().'-/i', "", $sVersion);
+            $package->setSourceReference($sVersion);
+        }
+        else
+        {
+            $package->setSourceReference('tags/'.$sVersion);
+        }
 
-			foreach ($aLinks as &$link)
-			{
-				if (substr($link->getTarget(), 0, 11) === 'afterlogic/')
-				{
-					$oLinkConstraint = $link->getConstraint();
-					$prettyConstraint = $oLinkConstraint->getPrettyString();
+        //will add dev-master version as alternative requirements to all Afterlogic modules
+        $aLinks = $package->getRequires();
+        $bNeedToUpdateRequires = false;
 
-					if (strpos($prettyConstraint, 'dev-master') === false)
-					{
-	//					$aConstraints = $oLinkConstraint->getConstraints();
-	//					$aConstraints[] = new Constraint('=', 'dev-master');
-	//					$oConstraint->setPrettyString($prettyConstraint . ' || dev-master');
-						$bNeedToUpdateRequires = true;
+        foreach ($aLinks as &$link)
+        {
+            if (substr($link->getTarget(), 0, 11) === 'afterlogic/')
+            {
+                $oLinkConstraint = $link->getConstraint();
+                $prettyConstraint = $oLinkConstraint->getPrettyString();
 
-						$versionParser = new VersionParser();
+                if (strpos($prettyConstraint, 'dev-master') === false)
+                {
+                    $bNeedToUpdateRequires = true;
+
+                    $versionParser = new VersionParser();
+                    if ($package->isDev())
+                    {
                         $oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master || dev-laravel || dev-8.x.x-version');
-						$link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
-					}
-				}
-			}
+                    } else {
+                        $oConstraint = $versionParser->parseConstraints($prettyConstraint . ' || dev-master');
+                    }
 
-			if ($bNeedToUpdateRequires) 
-			{
-				$package->setRequires($aLinks);
-			}
-		}
-			//
+                    $link = new \Composer\Package\Link($link->getSource(), $link->getTarget(), $oConstraint, $link->getDescription(), $oConstraint->getPrettyString());
+                }
+            }
+        }
 
-		$package->setDistUrl($package->getSourceUrl().'/archive/'.$sVersion.'.zip');
-		$package->setDistType("zip");
-	}
+        if ($bNeedToUpdateRequires) 
+        {
+            $package->setRequires($aLinks);
+        }
+
+        $package->setDistUrl($package->getSourceUrl().'/archive/'.$sVersion.'.zip');
+        $package->setDistType("zip");
+    }
 }
